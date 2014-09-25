@@ -1,0 +1,23 @@
+#!/bin/bash
+dirname="`dirname \"$0\"`" 
+dirname="`( cd \"$dirname\" && pwd )`"
+path=$1;
+if [ ! -d $path ]; then
+	exit
+fi
+cd $path
+
+LOGNAME="alex"
+eval "export $(egrep -z DBUS_SESSION_BUS_ADDRESS /proc/$(pgrep -u $LOGNAME gnome-session)/environ)";
+
+my_version=$(svn info | grep  -ohP 'Revision: \d*' | grep -ohP '\d*')
+url=$(svn info | grep -P "^URL:" | grep -ohP "svn://.*")
+version=$(svn info $url | grep  -ohP 'Revision: \d*' | grep -ohP '\d*')
+message=$(svn log  -q -v --xml --with-all-revprops -r $version | grep msg | sed -e "s/<msg>\([^<]*\)<\/msg>/\1/g");
+
+if [ "$version"  != "$my_version" ]; then
+	$(/usr/bin/aplay -q $dirname/message.wav)  
+	/usr/bin/notify-send "New revision: $version" "$message"
+
+fi
+
